@@ -68,75 +68,93 @@
   </div>
 
 
-
-
-  <div class="row">
-  <!-- Categorías -->
-  <div class="col-12 col-md-3 mb-4">
-    <div class="bg-light p-3 rounded">
+<div class="row">
+  <div class="col-12 col-md-3 mb-3 mb-md-0">
+    <div class="bg-light p-3 rounded shadow-sm">
       <h5 class="fw-bold">Categorías</h5>
-      <ul class="list-unstyled">
-        <li><a href="#" class="text-decoration-none">Albums</a></li>
-        <li><a href="#" class="text-decoration-none">Accesories</a></li>
-        <li><a href="#" class="text-decoration-none">Merch</a></li>
-        <li><a href="#" class="text-decoration-none">Giveaways</a></li>
+      <ul class="list-unstyled" id="categorias-list">
+        <!-- Las categorías se cargarán aquí dinámicamente -->
       </ul>
     </div>
   </div>
+  <div class="col-12 col-md-9">
+    <div class="row" id="contenedorproductos">
+      <!-- Los productos se cargarán aquí dinámicamente -->
+    </div>
+  </div>
+</div>
+
+  <!-- Footer -->
+  <footer class="bg-dark text-white text-center py-3 mt-5">
+    Diseñado por: Nataly Michell Cux Recinos - 1890-22-18009
+  </footer>
+
+  <script>
+    // Cargar categorías dinámicamente desde la API
+    document.addEventListener('DOMContentLoaded', () => {
+      const categoriasList = document.getElementById('categorias-list');
+      fetch('https://backcvbgtmdesa.azurewebsites.net/api/categorias')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error, status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(categorias => {
+          categoriasList.innerHTML = '';
+          categorias.forEach(categoria => {
+            const li = document.createElement('li');
+            li.innerHTML = `<a href="#" class="text-decoration-none">${categoria.descripcion}</a>`;
+            categoriasList.appendChild(li);
+          });
+        })
+        .catch(error => {
+          console.error('Error al cargar las categorías:', error);
+          categoriasList.innerHTML = '<li class="text-danger">Error al cargar las categorías.</li>';
+        });
+    });
+  </script>
 
 
 
-      <!-- Productos (col-sm-9) -->
-      <div class="col-12 col-sm-9">
-        <div class="row" id="contenedorproductos">
+  <!-- Javascript, productos dinámicos -->
+  <script>
+    let contadorCarrito = 0;
 
-        </div>
-      </div>
+    function agregarAlCarrito(producto) {
+      contadorCarrito++;
 
-      <!-- Footer -->
-      <footer class="bg-dark text-white text-center py-3 mt-5">
-        Diseñado por: Nataly Michell Cux Recinos - 1890-22-18009
-      </footer>
+      const badge = document.querySelector('.badge');
+      badge.textContent = contadorCarrito;
 
+      console.log(`Añadido al carrito: ${producto.Nombre}`);
+    }
 
-      <!-- Javascript, productos dinámicos -->
-      <script>
-        let contadorCarrito = 0;
+    const contenedor = document.getElementById('contenedorproductos');
 
-        function agregarAlCarrito(producto) {
-          contadorCarrito++;
-
-          const badge = document.querySelector('.badge');
-          badge.textContent = contadorCarrito;
-
-          console.log(`Añadido al carrito: ${producto.Nombre}`);
+    fetch('https://backcvbgtmdesa.azurewebsites.net/api/productos')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error, status: ${response.status}`);
         }
+        return response.json();
+      })
+      .then(data => {
+        data.forEach(producto => {
+          const col = document.createElement('div');
+          col.className = 'col-md-4 col-sm-12 p-2';
 
-        const contenedor = document.getElementById('contenedorproductos');
-
-        fetch('https://backcvbgtmdesa.azurewebsites.net/api/productos')
-          .then(response => {
-            if (!response.ok) {
-              throw new Error(`HTTP error, status: ${response.status}`);
-            }
-            return response.json();
-          })
-          .then(data => {
-            data.forEach(producto => {
-              const col = document.createElement('div');
-              col.className = 'col-md-4 col-sm-12 p-2';
-
-              let precioHTML = '';
-              if (producto.EnOferta && producto.PrecioOferta != null) {
-                precioHTML = `
+          let precioHTML = '';
+          if (producto.EnOferta && producto.PrecioOferta != null) {
+            precioHTML = `
                 <span class="text-danger fw-bold">Q${parseFloat(producto.PrecioOferta).toFixed(2)}</span>
                 <small class="text-muted text-decoration-line-through ms-2">Q${parseFloat(producto.Precio).toFixed(2)}</small>
               `;
-              } else {
-                precioHTML = `<span class="fw-bold">Q${parseFloat(producto.Precio).toFixed(2)}</span>`;
-              }
+          } else {
+            precioHTML = `<span class="fw-bold">Q${parseFloat(producto.Precio).toFixed(2)}</span>`;
+          }
 
-              col.innerHTML = `
+          col.innerHTML = `
               <div class="card h-100">
               <img src="${producto.Imagen}" class="card-img-top img-fluid" alt="${producto.Nombre}">
               <div class="card-body d-flex flex-column">
@@ -148,24 +166,24 @@
               </div>
             `;
 
-              contenedor.appendChild(col);
+          contenedor.appendChild(col);
 
-              const boton = col.querySelector('.añadir-carrito');
-              boton.addEventListener('click', (e) => {
-                e.preventDefault();
-                agregarAlCarrito(producto);
-              });
-            });
-
-          })
-          .catch(error => {
-            console.error('Error al cargar los productos:', error);
-            const errorMessage = document.createElement('div');
-            errorMessage.className = 'alert alert-danger';
-            errorMessage.textContent = 'Error al cargar los productos. Por favor, inténtalo de nuevo más tarde.';
-            contenedor.appendChild(errorMessage);
+          const boton = col.querySelector('.añadir-carrito');
+          boton.addEventListener('click', (e) => {
+            e.preventDefault();
+            agregarAlCarrito(producto);
           });
-      </script>
+        });
+
+      })
+      .catch(error => {
+        console.error('Error al cargar los productos:', error);
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'alert alert-danger';
+        errorMessage.textContent = 'Error al cargar los productos. Por favor, inténtalo de nuevo más tarde.';
+        contenedor.appendChild(errorMessage);
+      });
+  </script>
 
 
 </body>
